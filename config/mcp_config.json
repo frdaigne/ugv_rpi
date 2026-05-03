@@ -1,6 +1,6 @@
 {
   "_comment": "UGV MCP config — edit to enable and restrict tools",
-  "mcp_enabled": false,
+  "mcp_enabled": true,
   "require_token": true,
   "allowed_tools": [
     "get_system_status",

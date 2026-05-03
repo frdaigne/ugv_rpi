@@ -1,0 +1,23 @@
+{
+  "_comment": "UGV MCP config — edit to enable and restrict tools",
+  "mcp_enabled": false,
+  "require_token": true,
+  "allowed_tools": [
+    "get_system_status",
+    "get_robot_status",
+    "stop_robot",
+    "get_routine_status",
+    "get_events",
+    "get_vpn_status",
+    "get_zerotier_status",
+    "get_wireguard_status",
+    "validate_wireguard_config",
+    "check_dependencies"
+  ],
+  "dangerous_tools_require_confirmation": true,
+  "wireguard_default_interface": "wg0",
+  "wireguard_config_path": "/etc/wireguard/wg0.conf",
+  "_note_enable": "Set mcp_enabled=true and add tools to allowed_tools to unlock them",
+  "_note_token":  "Token is in config/.mcp_token — share it with Claude via MCP client config",
+  "_note_danger": "Dangerous tools (move_robot, start_wireguard, load_wireguard_config, etc.) always need confirm=true even when in allowed_tools"
+}

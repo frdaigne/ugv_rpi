@@ -3,21 +3,34 @@ UGV MCP Server — exposes robot tools to Claude.
 
 Two transport modes (auto-detected):
   1. FastMCP SSE  — if `mcp` package installed  →  port settings.mcp.port (default 5001)
-                     Claude Code: add to .claude/settings.json mcpServers
+                     Claude Code: add to .mcp.json at project root (see config/mcp_connect.md)
   2. REST fallback — always available via Flask   →  POST /mcp/rpc
 
-FastMCP tools implemented:
-  get_robot_status, move_robot, stop_robot, set_lights, set_gimbal,
+V2 tools (15): get_robot_status, move_robot, stop_robot, set_lights, set_gimbal,
   center_gimbal, capture_photo, start_recording, stop_recording,
   set_cv_mode, start_routine, stop_routine, get_routine_status,
   get_events, get_zerotier_status
 
-All tools call the Flask REST API (localhost:5000) — no direct hardware access.
+V3 tools (11): get_system_status, check_dependencies, install_missing_dependencies,
+  get_vpn_status, get_wireguard_status, validate_wireguard_config,
+  load_wireguard_config, start_wireguard, stop_wireguard,
+  restart_wireguard, enable_wireguard_autostart
+
+SECURITY: PrivateKey is NEVER logged, returned, or passed through any MCP tool.
+All tools call Flask REST API or services — no direct hardware access.
 """
 
 import threading
 import requests
 from ugv_logger import get_logger
+
+# V3 tool modules (imported lazily to survive missing psutil on dev machine)
+def _import_v3_tools():
+    try:
+        from mcp.tools import system_tools, vpn_tools, robot_tools
+        return system_tools, vpn_tools, robot_tools
+    except ImportError:
+        return None, None, None
 
 log = get_logger("mcp")
 
@@ -152,24 +165,107 @@ def tool_get_zerotier_status() -> dict:
     return _get("/zt/status")
 
 
+# ── V3 tool wrappers ──────────────────────────────────────────────────────────
+
+def tool_get_system_status() -> dict:
+    """System status: CPU, RAM, temperature, uptime, network interfaces."""
+    st, _, _ = _import_v3_tools()
+    return st.get_system_status() if st else {"error": "psutil not installed"}
+
+
+def tool_check_dependencies() -> dict:
+    """Check which system packages and Python packages are installed (OK/MISSING)."""
+    st, _, _ = _import_v3_tools()
+    return st.check_dependencies() if st else {"error": "V3 tools not available"}
+
+
+def tool_install_missing_dependencies(confirm: bool = False) -> dict:
+    """Install missing dependencies (apt + pip). DANGEROUS — confirm=true required."""
+    st, _, _ = _import_v3_tools()
+    return st.install_missing_dependencies(confirm) if st else {"error": "V3 tools not available"}
+
+
+def tool_get_vpn_status() -> dict:
+    """Combined ZeroTier + WireGuard status. PrivateKey never returned."""
+    _, vt, _ = _import_v3_tools()
+    return vt.get_vpn_status() if vt else {"error": "V3 tools not available"}
+
+
+def tool_get_wireguard_status() -> dict:
+    """WireGuard interfaces + peers. PrivateKey is NEVER included."""
+    _, vt, _ = _import_v3_tools()
+    return vt.get_wireguard_status() if vt else {"error": "V3 tools not available"}
+
+
+def tool_validate_wireguard_config(path: str) -> dict:
+    """Validate a WireGuard config file. Shows safe preview — PrivateKey masked."""
+    _, vt, _ = _import_v3_tools()
+    return vt.validate_wireguard_config(path) if vt else {"error": "V3 tools not available"}
+
+
+def tool_load_wireguard_config(source_path: str, interface: str = "wg0",
+                               confirm: bool = False) -> dict:
+    """Install WireGuard config to /etc/wireguard. Backup created. DANGEROUS — confirm=true required."""
+    _, vt, _ = _import_v3_tools()
+    return vt.load_wireguard_config(source_path, interface, confirm) if vt else {"error": "V3 tools not available"}
+
+
+def tool_start_wireguard(interface: str = "wg0", confirm: bool = False) -> dict:
+    """Start WireGuard tunnel (wg-quick up). DANGEROUS — confirm=true required."""
+    _, vt, _ = _import_v3_tools()
+    return vt.start_wireguard(interface, confirm) if vt else {"error": "V3 tools not available"}
+
+
+def tool_stop_wireguard(interface: str = "wg0", confirm: bool = False) -> dict:
+    """Stop WireGuard tunnel (wg-quick down). DANGEROUS — confirm=true required."""
+    _, vt, _ = _import_v3_tools()
+    return vt.stop_wireguard(interface, confirm) if vt else {"error": "V3 tools not available"}
+
+
+def tool_restart_wireguard(interface: str = "wg0", confirm: bool = False) -> dict:
+    """Restart WireGuard tunnel. DANGEROUS — confirm=true required."""
+    _, vt, _ = _import_v3_tools()
+    return vt.restart_wireguard(interface, confirm) if vt else {"error": "V3 tools not available"}
+
+
+def tool_enable_wireguard_autostart(interface: str = "wg0", confirm: bool = False) -> dict:
+    """Enable wg-quick@<interface> autostart via systemctl. DANGEROUS — confirm=true required."""
+    _, vt, _ = _import_v3_tools()
+    return vt.enable_wireguard_autostart(interface, confirm) if vt else {"error": "V3 tools not available"}
+
+
 # ── Tool registry (for REST fallback) ────────────────────────────────────────
 
 TOOLS = {
-    "get_robot_status":   (tool_get_robot_status,   {}),
-    "move_robot":         (tool_move_robot,          {"direction": "forward", "speed": 0.3, "duration": 1.0}),
-    "stop_robot":         (tool_stop_robot,          {}),
-    "set_lights":         (tool_set_lights,          {"base": 0, "head": 0}),
-    "set_gimbal":         (tool_set_gimbal,          {"x": 0.0, "y": 0.0, "speed": 200}),
-    "center_gimbal":      (tool_center_gimbal,       {}),
-    "capture_photo":      (tool_capture_photo,       {}),
-    "start_recording":    (tool_start_recording,     {}),
-    "stop_recording":     (tool_stop_recording,      {}),
-    "set_cv_mode":        (tool_set_cv_mode,         {"mode": "none"}),
-    "start_routine":      (tool_start_routine,       {"routine": "watch"}),
-    "stop_routine":       (tool_stop_routine,        {}),
-    "get_routine_status": (tool_get_routine_status,  {}),
-    "get_events":         (tool_get_events,          {"limit": 20}),
-    "get_zerotier_status":(tool_get_zerotier_status, {}),
+    # ── V2: Robot control ──
+    "get_robot_status":             (tool_get_robot_status,             {}),
+    "move_robot":                   (tool_move_robot,                   {"direction": "forward", "speed": 0.3, "duration": 1.0}),
+    "stop_robot":                   (tool_stop_robot,                   {}),
+    "set_lights":                   (tool_set_lights,                   {"base": 0, "head": 0}),
+    "set_gimbal":                   (tool_set_gimbal,                   {"x": 0.0, "y": 0.0, "speed": 200}),
+    "center_gimbal":                (tool_center_gimbal,                {}),
+    "capture_photo":                (tool_capture_photo,                {}),
+    "start_recording":              (tool_start_recording,              {}),
+    "stop_recording":               (tool_stop_recording,               {}),
+    "set_cv_mode":                  (tool_set_cv_mode,                  {"mode": "none"}),
+    "start_routine":                (tool_start_routine,                {"routine": "watch"}),
+    "stop_routine":                 (tool_stop_routine,                 {}),
+    "get_routine_status":           (tool_get_routine_status,           {}),
+    "get_events":                   (tool_get_events,                   {"limit": 20}),
+    "get_zerotier_status":          (tool_get_zerotier_status,          {}),
+    # ── V3: System ──
+    "get_system_status":            (tool_get_system_status,            {}),
+    "check_dependencies":           (tool_check_dependencies,           {}),
+    "install_missing_dependencies": (tool_install_missing_dependencies, {"confirm": False}),
+    # ── V3: VPN / WireGuard ──
+    "get_vpn_status":               (tool_get_vpn_status,               {}),
+    "get_wireguard_status":         (tool_get_wireguard_status,         {}),
+    "validate_wireguard_config":    (tool_validate_wireguard_config,    {"path": "/etc/wireguard/wg0.conf"}),
+    "load_wireguard_config":        (tool_load_wireguard_config,        {"source_path": "", "interface": "wg0", "confirm": False}),
+    "start_wireguard":              (tool_start_wireguard,              {"interface": "wg0", "confirm": False}),
+    "stop_wireguard":               (tool_stop_wireguard,               {"interface": "wg0", "confirm": False}),
+    "restart_wireguard":            (tool_restart_wireguard,            {"interface": "wg0", "confirm": False}),
+    "enable_wireguard_autostart":   (tool_enable_wireguard_autostart,   {"interface": "wg0", "confirm": False}),
 }
 
 
@@ -290,6 +386,64 @@ def _build_fastmcp(flask_base: str):
     def get_zerotier_status() -> dict:
         """ZeroTier network status."""
         return tool_get_zerotier_status()
+
+    # ── V3 tools ──────────────────────────────────────────────────────────────
+
+    @server.tool()
+    def get_system_status() -> dict:
+        """System status: CPU, RAM, temperature, uptime, network interfaces."""
+        return tool_get_system_status()
+
+    @server.tool()
+    def check_dependencies() -> dict:
+        """Check which system packages and Python packages are installed."""
+        return tool_check_dependencies()
+
+    @server.tool()
+    def install_missing_dependencies(confirm: bool = False) -> dict:
+        """Install missing dependencies. DANGEROUS — confirm=true required."""
+        return tool_install_missing_dependencies(confirm)
+
+    @server.tool()
+    def get_vpn_status() -> dict:
+        """Combined ZeroTier + WireGuard VPN status. PrivateKey never returned."""
+        return tool_get_vpn_status()
+
+    @server.tool()
+    def get_wireguard_status() -> dict:
+        """WireGuard interface and peer details. PrivateKey is NEVER included."""
+        return tool_get_wireguard_status()
+
+    @server.tool()
+    def validate_wireguard_config(path: str) -> dict:
+        """Validate a WireGuard config file. Safe preview with PrivateKey masked."""
+        return tool_validate_wireguard_config(path)
+
+    @server.tool()
+    def load_wireguard_config(source_path: str, interface: str = "wg0",
+                              confirm: bool = False) -> dict:
+        """Install WireGuard config — backup + chmod 600. DANGEROUS — confirm=true required."""
+        return tool_load_wireguard_config(source_path, interface, confirm)
+
+    @server.tool()
+    def start_wireguard(interface: str = "wg0", confirm: bool = False) -> dict:
+        """Start WireGuard tunnel (wg-quick up). DANGEROUS — confirm=true required."""
+        return tool_start_wireguard(interface, confirm)
+
+    @server.tool()
+    def stop_wireguard(interface: str = "wg0", confirm: bool = False) -> dict:
+        """Stop WireGuard tunnel (wg-quick down). DANGEROUS — confirm=true required."""
+        return tool_stop_wireguard(interface, confirm)
+
+    @server.tool()
+    def restart_wireguard(interface: str = "wg0", confirm: bool = False) -> dict:
+        """Restart WireGuard tunnel. DANGEROUS — confirm=true required."""
+        return tool_restart_wireguard(interface, confirm)
+
+    @server.tool()
+    def enable_wireguard_autostart(interface: str = "wg0", confirm: bool = False) -> dict:
+        """Enable systemctl wg-quick@<interface>. DANGEROUS — confirm=true required."""
+        return tool_enable_wireguard_autostart(interface, confirm)
 
     return server
 

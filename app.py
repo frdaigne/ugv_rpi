@@ -60,6 +60,9 @@ from services.settings import get as _setting, set_key as _set_key, \
                               all_settings, update_bulk
 from services.theme    import VALID_THEMES, DEFAULT_THEME, list_themes
 from mcp.server        import start_mcp_server, list_tools_schema, call_tool
+from services          import wireguard_service as _wg_svc
+from services.mcp_security import get_or_create_token as _mcp_token, \
+                                  get_audit_log as _mcp_audit
 
 log = get_logger("app")
 
@@ -740,6 +743,82 @@ def v2_create_user():
 @require_role("admin")
 def v2_delete_user(username):
     return jsonify(delete_user(username))
+
+
+# ── V3: WireGuard Flask routes ────────────────────────────────────
+# Viewer can read status; admin can control
+@app.route("/api/vpn/wireguard/status")
+@require_role("viewer")
+def vpn_wg_status():
+    """WireGuard status. PrivateKey is NEVER returned."""
+    return jsonify(_wg_svc.get_wireguard_status())
+
+
+@app.route("/api/vpn/wireguard/load", methods=["POST"])
+@require_role("admin")
+def vpn_wg_load():
+    """Install a WireGuard config. PrivateKey is NEVER logged."""
+    d = request.get_json() or {}
+    src  = d.get("source_path", "")
+    iface= d.get("interface", "wg0")
+    conf = d.get("confirm", False)
+    if not src:
+        return jsonify({"ok": False, "error": "source_path required"}), 400
+    return jsonify(_wg_svc.install_wireguard_config(src, iface))
+
+
+@app.route("/api/vpn/wireguard/start", methods=["POST"])
+@require_role("admin")
+def vpn_wg_start():
+    iface = (request.get_json() or {}).get("interface", "wg0")
+    return jsonify(_wg_svc.start_wireguard(iface))
+
+
+@app.route("/api/vpn/wireguard/stop", methods=["POST"])
+@require_role("admin")
+def vpn_wg_stop():
+    iface = (request.get_json() or {}).get("interface", "wg0")
+    return jsonify(_wg_svc.stop_wireguard(iface))
+
+
+@app.route("/api/vpn/wireguard/restart", methods=["POST"])
+@require_role("admin")
+def vpn_wg_restart():
+    iface = (request.get_json() or {}).get("interface", "wg0")
+    return jsonify(_wg_svc.restart_wireguard(iface))
+
+
+@app.route("/api/vpn/wireguard/validate", methods=["POST"])
+@require_role("viewer")
+def vpn_wg_validate():
+    """Validate a WireGuard config — safe preview, PrivateKey masked."""
+    path = (request.get_json() or {}).get("path", "")
+    if not path:
+        return jsonify({"ok": False, "error": "path required"}), 400
+    valid, errors = _wg_svc.validate_wireguard_config(path)
+    parsed = _wg_svc.parse_wireguard_config(path)
+    return jsonify({
+        "valid":        valid,
+        "errors":       errors,
+        "safe_preview": parsed.get("safe_text", ""),
+        "note":         "PrivateKey is masked in all outputs",
+    })
+
+
+# ── V3: MCP status + audit ────────────────────────────────────────
+@app.route("/api/mcp/status")
+@require_role("admin")
+def mcp_status():
+    """MCP server status + audit log."""
+    from mcp.server import MCP_AVAILABLE, _MCP_THREAD
+    tok = _mcp_token()
+    return jsonify({
+        "fastmcp_available": MCP_AVAILABLE,
+        "thread_alive":      bool(_MCP_THREAD and _MCP_THREAD.is_alive()),
+        "token_file":        "config/.mcp_token",
+        "token_preview":     tok[:8] + "…" if tok else None,
+        "audit_last_10":     _mcp_audit(10),
+    })
 
 
 # ── MCP REST fallback (/mcp/rpc) ───────────────────────────────────

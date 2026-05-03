@@ -59,7 +59,7 @@ from services.auth     import auth_bp, init_db as _auth_init_db, \
 from services.settings import get as _setting, set_key as _set_key, \
                               all_settings, update_bulk
 from services.theme    import VALID_THEMES, DEFAULT_THEME, list_themes
-from mcp.server        import start_mcp_server, list_tools_schema, call_tool
+from ugv_mcp.server        import start_mcp_server, list_tools_schema, call_tool
 from services          import wireguard_service as _wg_svc
 from services.mcp_security import get_or_create_token as _mcp_token, \
                                   get_audit_log as _mcp_audit
@@ -810,7 +810,7 @@ def vpn_wg_validate():
 @require_role("admin")
 def mcp_status():
     """MCP server status + audit log."""
-    from mcp.server import MCP_AVAILABLE, _MCP_THREAD
+    from ugv_mcp.server import MCP_AVAILABLE, _MCP_THREAD
     tok = _mcp_token()
     return jsonify({
         "fastmcp_available": MCP_AVAILABLE,

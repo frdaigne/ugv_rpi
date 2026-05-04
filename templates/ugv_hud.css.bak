@@ -190,50 +190,38 @@
 /* ── Tab navigation ──────────────────────────────────────────────── */
 .ugv-tab-nav {
   display: flex;
-  border-bottom: 1px solid var(--hud-border, rgba(79,245,192,0.12));
-  margin-bottom: 8px;
-  gap: 0;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  margin-bottom: 10px;
+  gap: 2px;
   flex-shrink: 0;
-  background: rgba(4,8,16,0.4);
 }
 .ugv-tab-btn {
   flex: 1;
-  padding: 8px 4px;
+  padding: 6px 4px;
   background: none;
   border: none;
   border-bottom: 2px solid transparent;
-  color: var(--t-text-3, #555);
-  font-size: 10px;
-  letter-spacing: 0.08em;
+  color: #888;
+  font-size: 11px;
+  letter-spacing: 0.04em;
   cursor: pointer;
-  transition: color 0.18s, border-color 0.18s, background 0.18s;
-  font-family: var(--t-font, inherit);
+  transition: color 0.2s, border-color 0.2s;
+  font-family: inherit;
   text-transform: uppercase;
 }
-.ugv-tab-btn:hover {
-  color: var(--t-text-2, #9ab);
-  background: rgba(46,249,196,0.03);
-}
+.ugv-tab-btn:hover { color: #ccc; }
 .ugv-tab-btn.ugv-tab-active {
-  color: var(--hud-green, #2ef9c4);
-  border-bottom-color: var(--hud-green, #2ef9c4);
-  background: rgba(46,249,196,0.04);
+  color: var(--hud-green);
+  border-bottom-color: var(--hud-green);
 }
 
 .ugv-tab-panel { display: none; }
 .ugv-tab-panel.ugv-tab-show { display: block; }
 
-/* ── Section feed ctrl: scrollable content ───────────────────────── */
+/* ── Section feed ctrl: add scroll when tabs active ─────────────── */
 .section_feed_ctrl .feed_ctrl_btn {
   overflow-y: auto;
-  max-height: calc(100vh - 160px);
-  scrollbar-width: thin;
-  scrollbar-color: var(--hud-border, rgba(79,245,192,0.15)) transparent;
-}
-.section_feed_ctrl .feed_ctrl_btn::-webkit-scrollbar { width: 4px; }
-.section_feed_ctrl .feed_ctrl_btn::-webkit-scrollbar-thumb {
-  background: var(--hud-border, rgba(79,245,192,0.15));
-  border-radius: 4px;
+  max-height: calc(100vh - 180px);
 }
 
 /* ── Autonomous modes panel ──────────────────────────────────────── */
@@ -632,42 +620,4 @@
   .v3-nav-btn { padding: 7px 8px; font-size: 9px; letter-spacing: 0.04em; }
   #v3-nav { padding: 0 6px; }
   #panel-toggle-btn { display: none; }
-}
-
-/* ── Gauge row (HUD bottom-left) ─────────────────────────────────── */
-.hud-gauge-row {
-  display: flex;
-  gap: 6px;
-  margin-top: 4px;
-}
-
-/* ── Patrol duration row ─────────────────────────────────────────── */
-.patrol-duration-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 8px;
-  font-size: 11px;
-  color: var(--t-text-3, #555);
-}
-.patrol-duration-row label {
-  color: var(--t-text-2, #7a98bb);
-  font-size: 10px;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  white-space: nowrap;
-}
-.patrol-duration-row input[type="number"] {
-  width: 64px;
-  background: var(--t-bg-3, rgba(14,22,40,0.8));
-  border: 1px solid var(--t-border-dim, rgba(255,255,255,0.06));
-  border-radius: var(--t-radius, 4px);
-  color: var(--t-text-1, #dce8f7);
-  padding: 3px 8px;
-  font-size: 11px;
-  font-family: var(--t-font, monospace);
-}
-.patrol-duration-row input[type="number"]:focus {
-  outline: none;
-  border-color: var(--t-primary-border, rgba(46,249,196,0.3));
 }

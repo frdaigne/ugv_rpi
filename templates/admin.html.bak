@@ -7,9 +7,10 @@
   <script src="./jquery-3.7.1.min.js"></script>
   <link rel="stylesheet" href="./style.css">
   <link rel="stylesheet" href="./ugv_hud.css">
-  <link rel="stylesheet" href="./ugv_hud.css">
-  <link rel="stylesheet" href="./themes/nexus.css" id="theme-css">
+  <link rel="stylesheet" href="./themes/dark.css" id="theme-css">
   <style>
+    body { background: var(--t-bg-0, #0f0f11); }
+
     .admin-wrap {
       max-width: 1100px;
       margin: 0 auto;
@@ -167,26 +168,6 @@
   </style>
 </head>
 <body>
-
-  <!-- V3 Navigation -->
-  <div id="v2-topbar">
-    <div id="v2-topbar-left">
-      <span style="color:var(--t-primary,#2ef9c4);font-size:13px;letter-spacing:.14em;font-weight:bold;">⬡ UGV</span>
-    </div>
-    <div id="v2-topbar-right">
-      <span id="v2-user-info" style="color:var(--t-text-2);font-size:11px;"></span>
-    </div>
-  </div>
-  <div id="v3-nav">
-    <a class="v3-nav-btn" href="/">PILOT</a>
-    <div class="v3-nav-sep"></div>
-    <a class="v3-nav-btn" href="/remote">REMOTE</a>
-    <a class="v3-nav-btn" href="/photos">PHOTOS</a>
-    <a class="v3-nav-btn" href="/videos">VIDEOS</a>
-    <div class="v3-nav-sep"></div>
-    <a class="v3-nav-btn active" href="/admin" aria-current="page">ADMIN</a>
-  </div>
-
 <div class="admin-wrap">
 
   <!-- Top bar -->
@@ -391,11 +372,6 @@ $(function() {
   loadEvents();
   loadSettings();
   setInterval(loadStatus, 8000);
-
-  // Apply saved theme
-  const t = localStorage.getItem("ugv-theme") || "nexus";
-  const link = document.getElementById("theme-css");
-  if (link) link.href = "/themes/" + t + ".css";
 });
 </script>
 </body>

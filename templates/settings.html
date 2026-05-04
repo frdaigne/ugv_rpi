@@ -1,90 +1,142 @@
 <html lang="en-US">
   <head>
-    <title>Bus Servos Initialization Setup</title>
+    <title>UGV — Servo Setup</title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1.0">
-    <!-- <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> -->
     <script src="./jquery-3.7.1.min.js"></script>
     <script src="./js-yaml.min.js"></script>
     <script src="./socket.io.js"></script>
     <link href="./style.css" rel="stylesheet" type="text/css">
-    <style type="text/css">
-    </style>
+    <link href="./ugv_hud.css" rel="stylesheet" type="text/css">
+    <link href="./themes/nexus.css" rel="stylesheet" type="text/css" id="v3-theme-css">
   </head>
 <body>
-    <main>
-        <div class="setting box_outline">
-            <section class="setting_sc">
-              <p>For the first time use of this Pan-Tilt, you will need to follow these steps to config the servos' ID and middle position:</p>
-              <p class="t_special"><span class="t_light t_bg_black">Tilt Servo ID: 1</span><span class="t_light t_bg_black">Pan Servo ID: 2</span></p>
-              <p>The default ID of the Tilt Servo and Pan Servo is both 1 at the beginning, but the ID of the Pan Servo should be set to 2</p>
-            </section>
-            <section class="setting_sc setting_sc_step">
-              <div>
-                <div class="step_num">1</div>
-                <p>Disconnect the wire of the Tilt Servo, make sure you are setting the ID of Pan Servo.</p>
-              </div>
-              <img src="" />
-            </section>
-            <section class="setting_sc setting_sc_step">
-              <div>
-                <div class="step_num">2</div>
-                <p>Click the <span class="t_light">[Set Pan ID]</span> button to configure the current servo as Pan Servo, which will set the ID of the Pan Servo as 2.</p>
-              </div>
-              <img src="" />
-              <div class="long_btn"><a onclick="confirmSetPanID();">Set Pan ID</a></div>
-            </section>
-            <section class="setting_sc setting_sc_step">
-              <div>
-                <div class="step_num">3</div>
-                <p>Then you can connect the wire of the Tilt Servo back to the Pan-Tilt.</p>
-              </div>
-              <img src="" />
-            </section>
-            <section class="setting_sc setting_sc_step">
-              <div>
-                <div class="step_num">4</div>
-                <p>Now we can begin to set the middle position and click the <span class="t_light">[Release]</span> button to unlock the torque lock of the two servos.</p>
-              </div>
-              <img src="" />
-              <div class="long_btn"><a onclick="confirmRelease();">Release</a></div>
-            </section>
-            <section class="setting_sc setting_sc_step">
-              <div>
-                <div class="step_num">5</div>
-                <p>As shown in the picture below, manually adjust the angle of the two servos so that the camera is pointed straight ahead.</p>
-              </div>
-              <img src="" />
-            </section>
-            <section class="setting_sc setting_sc_step">
-              <div>
-                <div class="step_num">6</div>
-                <p>Click the <span class="t_light">[Middle Set]</span> button to set the current position as the middle position.</p>
-              </div>
-              <img src="" />
-              <div class="long_btn"><a onclick="confirmMiddleSet();">Middle Set</a></div>
-            </section>
-            <section class="setting_sc setting_sc_step">
-              <div>
-                <div class="step_num">7</div>
-                <p>Then you can begin to test the Pan-Tilt to turn to different angles. and check whether it can work normally.</p>
-              </div>
-              <img src="" />
-            </section>
-            <section class="setting_sc setting_sc_step">
-              <div>
-                <div class="step_num">8</div>
-                <p>if the Pan-Tilt is not operating normally, you may try to redo the whole process again.</p>
-              </div>
-              <img src="" />
-              <p>Note: If you didn't disconnect the Tilt Servo in step 1, then both servo IDs will be set to 2 after you click the <span class="t_light">[Set Pan ID]</span> button. In this case, you need to click <span class="t_light">[Set Tilt ID]</span> to restore both servo IDs to 1, then repeat the entire setup process!</p>
-              <div class="long_btn"><a onclick="confirmSetTiltID();">Set Tilt ID</a></div>
-            </section>
-        </div>
-        <div class="long_btn">
-          <a href="./"><span>&lt;&nbsp;</span>Index Page</span></a>
+
+  <!-- Topbar -->
+  <div id="v2-topbar">
+    <div id="v2-topbar-left">
+      <span style="color:var(--t-primary,#2ef9c4);font-size:13px;letter-spacing:.14em;font-weight:bold;">⬡ UGV</span>
+    </div>
+    <div id="v2-topbar-right">
+      <span id="v2-user-info"></span>
+    </div>
+  </div>
+
+  <!-- Navigation -->
+  <div id="v3-nav">
+    <a class="v3-nav-btn" href="/">PILOT</a>
+    <div class="v3-nav-sep"></div>
+    <a class="v3-nav-btn" href="/remote">REMOTE</a>
+    <a class="v3-nav-btn" href="/photos">PHOTOS</a>
+    <a class="v3-nav-btn" href="/videos">VIDEOS</a>
+    <div class="v3-nav-sep"></div>
+    <a class="v3-nav-btn active" href="/settings.html" aria-current="page">SETTINGS</a>
+    <a class="v3-nav-btn v3-nav-admin" href="/admin">ADMIN</a>
+  </div>
+
+  <main>
+    <div class="nx-page">
+      <h1 style="font-size:14px;color:var(--t-primary,#2ef9c4);letter-spacing:.14em;margin-bottom:24px;text-transform:uppercase;">
+        SERVO SETUP
+      </h1>
+
+      <div class="nx-section setting box_outline">
+        <section class="setting_sc">
+          <p style="color:var(--t-text-2);line-height:1.6;">For the first time use of this Pan-Tilt, you will need to follow these steps to configure the servo IDs and middle position:</p>
+          <p class="t_special">
+            <span class="t_light t_bg_black" style="padding:10px 16px;border-radius:6px;">Tilt Servo ID: 1</span>
+            <span class="t_light t_bg_black" style="padding:10px 16px;border-radius:6px;">Pan Servo ID: 2</span>
+          </p>
+          <p style="color:var(--t-text-2);font-size:12px;">The default ID of both servos is 1. The Pan Servo ID must be changed to 2.</p>
+        </section>
+
+        <section class="setting_sc setting_sc_step">
+          <div>
+            <div class="step_num">1</div>
+            <p>Disconnect the wire of the Tilt Servo. This ensures you are only setting the ID of the Pan Servo.</p>
+          </div>
+        </section>
+
+        <section class="setting_sc setting_sc_step">
+          <div>
+            <div class="step_num">2</div>
+            <p>Click <span class="t_light">[Set Pan ID]</span> to configure the current servo as Pan Servo (sets its ID to 2).</p>
+          </div>
+          <div class="long_btn"><a onclick="confirmSetPanID();" style="cursor:pointer;">Set Pan ID</a></div>
+        </section>
+
+        <section class="setting_sc setting_sc_step">
+          <div>
+            <div class="step_num">3</div>
+            <p>Reconnect the Tilt Servo wire.</p>
+          </div>
+        </section>
+
+        <section class="setting_sc setting_sc_step">
+          <div>
+            <div class="step_num">4</div>
+            <p>Click <span class="t_light">[Release]</span> to unlock the torque lock on both servos, then manually adjust to center position.</p>
+          </div>
+          <div class="long_btn"><a onclick="confirmRelease();" style="cursor:pointer;">Release</a></div>
+        </section>
+
+        <section class="setting_sc setting_sc_step">
+          <div>
+            <div class="step_num">5</div>
+            <p>Manually adjust the gimbal so the camera points straight ahead.</p>
+          </div>
+        </section>
+
+        <section class="setting_sc setting_sc_step">
+          <div>
+            <div class="step_num">6</div>
+            <p>Click <span class="t_light">[Middle Set]</span> to save the current position as the center.</p>
+          </div>
+          <div class="long_btn"><a onclick="confirmMiddleSet();" style="cursor:pointer;">Middle Set</a></div>
+        </section>
+
+        <section class="setting_sc setting_sc_step">
+          <div>
+            <div class="step_num">7</div>
+            <p>Test the Pan-Tilt movement to verify normal operation.</p>
+          </div>
+        </section>
+
+        <section class="setting_sc setting_sc_step">
+          <div>
+            <div class="step_num">8</div>
+            <p>If the Pan-Tilt is not operating correctly, redo the entire process.</p>
+          </div>
+          <p style="color:var(--t-text-2);font-size:12px;line-height:1.5;margin-top:8px;">
+            <strong style="color:var(--t-warn,#f59e0b);">Note:</strong> If you skipped step 1 (Tilt disconnected), both servo IDs will be set to 2. Use <span class="t_light">[Set Tilt ID]</span> to restore ID 1, then restart the process.
+          </p>
+          <div class="long_btn"><a onclick="confirmSetTiltID();" style="cursor:pointer;">Set Tilt ID</a></div>
+        </section>
+      </div><!-- /.nx-section -->
+
+      <div class="long_btn" style="margin-top:16px;">
+        <a href="/"><span>&lsaquo;&nbsp;</span>Back to Pilot</a>
       </div>
-    </main>
+    </div><!-- /.nx-page -->
+  </main>
+
+  <div id="ugv-toasts"></div>
+
+  <script src="./control.js"></script>
+  <script src="./ugv_hud.js"></script>
+  <script>
+    const t = localStorage.getItem("ugv-theme") || "nexus";
+    const link = document.getElementById("v3-theme-css");
+    if (link) link.href = "/themes/" + t + ".css";
+
+    fetch("/auth/me").then(r=>r.json()).then(d => {
+      if (d.authenticated) {
+        const info = document.getElementById("v2-user-info");
+        if (info) info.textContent = d.username + " (" + d.role + ")";
+        const admin = document.querySelector(".v3-nav-admin");
+        if (admin && d.role !== "admin") admin.style.display = "none";
+      }
+    }).catch(()=>{});
+  </script>
 </body>
-<script src="./control.js"></script>
 </html>

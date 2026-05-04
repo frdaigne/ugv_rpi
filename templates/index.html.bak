@@ -102,7 +102,7 @@
                       <span class="hud-speed-label">SPEED</span>
                       <div id="hud-speed-bar"><div id="hud-speed-fill"></div></div>
                     </div>
-                    <div class="hud-gauge-row">
+                    <div style="display:flex;gap:6px;margin-top:4px;">
                       <div id="hud-pan-gauge"  class="hud-gauge-container"></div>
                       <div id="hud-tilt-gauge" class="hud-gauge-container"></div>
                     </div>
@@ -147,7 +147,8 @@
                 <button id="fullscreen-btn" class="normal_btn normal_btn_size" onclick="toggleFullscreen()" title="Fullscreen">⛶</button>
               </div>
               <div style="display:flex;align-items:center;margin-left:auto;">
-                <button class="normal_btn normal_btn_size btn-emergency-stop" onclick="ugvStop()"
+                <button class="normal_btn normal_btn_size" onclick="ugvStop()"
+                  style="border-color:rgba(240,78,106,0.4);color:var(--t-danger,#f04e6a);font-size:11px;padding:4px 10px;"
                   title="Emergency stop">⛔ STOP</button>
               </div>
             </div>
@@ -343,9 +344,11 @@
             <div class="mode-card">
               <h3>Patrol</h3>
               <p>Robot advances in segments, scanning with gimbal.</p>
-              <div class="patrol-duration-row">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:11px;color:#888;">
                 <label>Duration (s)</label>
-                <input id="patrol-duration" type="number" value="120" min="10" max="600">
+                <input id="patrol-duration" type="number" value="120" min="10" max="600"
+                  style="width:60px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);
+                  border-radius:4px;color:#d8d8d8;padding:3px 6px;font-size:11px;font-family:inherit;">
               </div>
               <div class="mode-btns">
                 <button class="mode-start-btn" onclick="ugvPatrol()">▶ Start Patrol</button>

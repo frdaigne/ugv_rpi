@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UGV — Mission Control</title>
+
+  <link rel="stylesheet" href="./style.css">
+  <link rel="stylesheet" href="./ugv_hud.css">
+  <link rel="stylesheet" href="./themes/nexus.css" id="v2-theme-css">
+  <link rel="stylesheet" href="./mission_control.css">
+
+  <script src="./jquery-3.7.1.min.js"></script>
+  <script src="./js-yaml.min.js"></script>
+</head>
+<body>
+
+  <!-- ── V2 Topbar ─────────────────────────────────────────────────── -->
+  <div id="v2-topbar">
+    <div id="v2-topbar-left">
+      <span style="color:var(--t-primary,#2ef9c4);font-size:12px;letter-spacing:.1em;font-weight:bold;">⬡ UGV</span>
+      <span id="v2-routine-badge" class="v2-badge v2-badge-idle">● MISSION CONTROL</span>
+    </div>
+    <div id="v2-topbar-right">
+      <span id="v2-user-info"></span>
+      <a id="v2-admin-link" href="/admin" style="display:none">ADMIN</a>
+      <a id="v2-logout-link" href="/auth/logout" style="display:none">LOGOUT</a>
+    </div>
+  </div>
+
+  <!-- ── V3 Navigation bar ─────────────────────────────────────────── -->
+  <div id="v3-nav">
+    <a class="v3-nav-btn" href="/">PILOT</a>
+    <div class="v3-nav-sep"></div>
+    <a class="v3-nav-btn active" href="/mission-control" aria-current="page">MISSION</a>
+    <div class="v3-nav-sep"></div>
+    <a class="v3-nav-btn" href="/remote">REMOTE</a>
+    <a class="v3-nav-btn" href="/photos">PHOTOS</a>
+    <a class="v3-nav-btn" href="/videos">VIDEOS</a>
+    <div class="v3-nav-sep"></div>
+    <a class="v3-nav-btn" href="/settings.html">SETTINGS</a>
+    <a class="v3-nav-btn v3-nav-admin" href="/admin">ADMIN</a>
+  </div>
+
+  <!-- ── Main layout ───────────────────────────────────────────────── -->
+  <div id="mc-layout">
+
+    <!-- ── 2D Map ─────────────────────────────────────────────────── -->
+    <div id="mc-map-wrap">
+      <canvas id="mc-map"></canvas>
+
+      <!-- SLAM mode badge -->
+      <div id="mc-slam-badge" class="mock">SLAM: MOCK</div>
+
+      <!-- XY coordinates readout -->
+      <div id="mc-coords">x: 0.00 m   y: 0.00 m   θ: 0.0°</div>
+
+      <!-- Map controls -->
+      <div id="mc-map-ctrl">
+        <button onclick="mcZoomIn()"    title="Zoom in">+</button>
+        <button onclick="mcZoomOut()"   title="Zoom out">−</button>
+        <button onclick="mcCenterView()" title="Center on origin" style="font-size:12px">⌖</button>
+      </div>
+    </div>
+
+    <!-- ── Right panel ────────────────────────────────────────────── -->
+    <div id="mc-panel">
+
+      <!-- Camera feed -->
+      <div class="mc-card">
+        <div class="mc-card-title">Camera</div>
+        <img id="mc-camera" src="/video_feed" alt="Camera feed"
+             onerror="this.src='';this.alt='Feed unavailable'">
+      </div>
+
+      <!-- Position -->
+      <div class="mc-card">
+        <div class="mc-card-title">Position</div>
+        <div class="mc-row">
+          <span class="mc-label">X</span>
+          <span class="mc-val primary" id="mc-x">—</span>
+        </div>
+        <div class="mc-row">
+          <span class="mc-label">Y</span>
+          <span class="mc-val primary" id="mc-y">—</span>
+        </div>
+        <div class="mc-row">
+          <span class="mc-label">θ (yaw)</span>
+          <span class="mc-val" id="mc-theta">—</span>
+        </div>
+        <div class="mc-row">
+          <span class="mc-label">Source</span>
+          <span class="mc-val warn" id="mc-source">—</span>
+        </div>
+        <div class="mc-row">
+          <span class="mc-label">Confidence</span>
+          <span class="mc-val" id="mc-conf-val">—</span>
+        </div>
+        <div id="mc-confidence-bar"><div id="mc-confidence-fill"></div></div>
+        <div class="mc-row" style="margin-top:6px">
+          <span class="mc-label">Updated</span>
+          <span class="mc-val" id="mc-ts" style="font-size:10px">—</span>
+        </div>
+      </div>
+
+      <!-- SLAM status -->
+      <div class="mc-card">
+        <div class="mc-card-title">SLAM Status</div>
+        <div class="mc-row">
+          <span class="mc-label">LiDAR</span>
+          <span class="mc-val" id="mc-lidar-status">—</span>
+        </div>
+        <div class="mc-row">
+          <span class="mc-label">SLAM engine</span>
+          <span class="mc-val" id="mc-slam-status">—</span>
+        </div>
+        <div id="mc-history-count" style="text-align:right;font-size:10px;color:var(--t-text-dim);font-family:monospace;margin-top:4px">
+          0 pts stored
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="mc-card">
+        <div class="mc-card-title">Actions</div>
+        <button class="mc-btn danger" onclick="mcReset()">Reset Tracking</button>
+        <button class="mc-btn" onclick="mcCenterView()">Center Map</button>
+        <a class="mc-btn" href="/" style="display:block;text-align:center;text-decoration:none;margin-top:4px">
+          Back to Pilot
+        </a>
+      </div>
+
+    </div><!-- /mc-panel -->
+  </div><!-- /mc-layout -->
+
+  <script src="./mission_control.js"></script>
+
+  <!-- Apply active theme from ugv_hud.js convention -->
+  <script>
+    // Sync theme with main app preference
+    fetch('/api/v2/theme')
+      .then(r => r.json())
+      .then(d => {
+        const theme = (d.active || 'nexus').replace(/[^a-z0-9_-]/g,'');
+        const link  = document.getElementById('v2-theme-css');
+        if (link) link.href = `./themes/${theme}.css`;
+      })
+      .catch(() => {});
+  </script>
+</body>
+</html>

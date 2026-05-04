@@ -51,6 +51,8 @@ import ugv_api
 from ugv_logger import get_logger
 from routes.zerotier import zt_bp
 from routes.remote   import remote_bp
+from mission_control.routes      import mc_bp
+from mission_control.slam_adapter import init_slam_adapter
 
 # V2 services
 from services.auth     import auth_bp, init_db as _auth_init_db, \
@@ -107,6 +109,10 @@ cvf = cv_ctrl.OpencvFuncs(thisPath, base)
 # Register safe REST API (non-breaking, additive)
 ugv_api.init_api(base, cvf, si, f, thisPath)
 app.register_blueprint(ugv_api.ugv_api)
+
+# Mission Control — SLAM / positioning module
+init_slam_adapter(base)
+app.register_blueprint(mc_bp)
 
 # Register ZeroTier management routes
 app.register_blueprint(zt_bp)

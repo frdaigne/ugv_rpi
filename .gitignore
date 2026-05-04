@@ -5,3 +5,11 @@ tutorial_en/.ipynb_checkpoints/
 tutorial_cn/.ipynb_checkpoints/
 templates/pictures/photo*
 templates/videos/video*
+# Local runtime
+.venv-mcp/
+ugv_mcp/
+logs/
+
+# Secrets
+config/.secret_key
+config/ugv_users.db
